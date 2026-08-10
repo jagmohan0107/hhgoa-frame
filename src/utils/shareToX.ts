@@ -36,7 +36,7 @@ export async function shareToX(file: File, shareUrl?: string): Promise<"native" 
   if (shareUrl) textParts.push(shareUrl);
   const text = textParts.join("\n\n");
 
-  const webIntent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
+  const webIntent = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
 
   const ua = navigator.userAgent || "";
   const isAndroid = /Android/i.test(ua);
