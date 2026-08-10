@@ -41,7 +41,8 @@ function showDebugToast(message: string) {
         const text = encodeURIComponent(SHARE_CAPTION || "I just created my HH Goa 2026 card! 🌴🔥 #HHGoa2026");
         const url = encodeURIComponent(shareUrl || window.location.href);
 
-        window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, "_blank", "noopener,noreferrer");
+        // Open intent in the same tab to avoid popup blocking on some mobile browsers
+        window.location.href = `https://twitter.com/intent/tweet?text=${text}&url=${url}`;
         return "intent";
       }
  */
