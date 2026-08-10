@@ -31,9 +31,68 @@ export async function shareToX(file: File, shareUrl?: string): Promise<"native" 
     }
   }
 
-  const params = new URLSearchParams({ text: SHARE_CAPTION });
-  if (shareUrl) params.set("url", shareUrl);
-  const intentUrl = `https://x.com/intent/tweet?${params.toString()}`;
-  window.open(intentUrl, "_blank", "noopener,noreferrer");
+  // Build the text for the post (caption + optional URL)
+  const textParts = [SHARE_CAPTION];
+  if (shareUrl) textParts.push(shareUrl);
+  const text = textParts.join("\n\n");
+
+  const webIntent = `https://x.com/intent/tweet?text=${encodeURIComponent(text)}`;
+
+  const ua = navigator.userAgent || "";
+  const isAndroid = /Android/i.test(ua);
+  const isIOS = /iPhone|iPad|iPod/i.test(ua);
+
+  // Try deep-linking into the native X/Twitter app on mobile platforms.
+  if (isIOS || isAndroid) {
+    const appUrl = `twitter://post?message=${encodeURIComponent(text)}`;
+    const androidIntent = `intent://post?message=${encodeURIComponent(text)}#Intent;package=com.twitter.android;scheme=twitter;end`;
+
+    let fallbackOpened = false;
+    const tryOpenFallback = () => {
+      if (fallbackOpened) return;
+      fallbackOpened = true;
+      window.open(webIntent, "_blank", "noopener,noreferrer");
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) {
+        // Page was hidden — likely the app opened successfully
+        fallbackOpened = true;
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibility);
+
+    // Attempt platform-appropriate deep link
+    try {
+      if (isAndroid) {
+        // Use Android intent first, then scheme fallback
+        window.location.href = androidIntent;
+      } else {
+        window.location.href = appUrl;
+      }
+    } catch (e) {
+      try {
+        window.open(isAndroid ? androidIntent : appUrl, "_blank", "noopener,noreferrer");
+      } catch {}
+    }
+
+    // If the app didn't open within ~800ms, fall back to the web intent
+    const timer = window.setTimeout(() => {
+      tryOpenFallback();
+      document.removeEventListener("visibilitychange", onVisibility);
+    }, 800);
+
+    // Clean up after a short while
+    setTimeout(() => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onVisibility);
+    }, 2000);
+
+    return "intent";
+  }
+
+  // Desktop / unknown platform: open web intent
+  window.open(webIntent, "_blank", "noopener,noreferrer");
   return "intent";
 }
