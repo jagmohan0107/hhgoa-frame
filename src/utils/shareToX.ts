@@ -1,5 +1,38 @@
 import { SHARE_CAPTION } from "../config/frameConfig";
 
+// Small on-screen debug toast useful on mobile when devtools aren't available
+function showDebugToast(message: string) {
+  try {
+    const id = "share-to-x-debug-toast";
+    let el = document.getElementById(id) as HTMLDivElement | null;
+    if (!el) {
+      el = document.createElement("div");
+      el.id = id;
+      el.style.position = "fixed";
+      el.style.bottom = "16px";
+      el.style.left = "50%";
+      el.style.transform = "translateX(-50%)";
+      el.style.background = "rgba(0,0,0,0.85)";
+      el.style.color = "white";
+      el.style.padding = "8px 12px";
+      el.style.borderRadius = "8px";
+      el.style.zIndex = "99999";
+      el.style.fontSize = "14px";
+      el.style.maxWidth = "90%";
+      el.style.boxShadow = "0 4px 12px rgba(0,0,0,0.3)";
+      document.body.appendChild(el);
+    }
+    el.textContent = message;
+    el.style.opacity = "1";
+    el.style.transition = "opacity 0.25s ease";
+    window.setTimeout(() => {
+      el && (el.style.opacity = "0");
+    }, 2500);
+  } catch (e) {
+    // ignore
+  }
+}
+
 /**
  * Shares the generated image to X.
  *
@@ -64,6 +97,7 @@ export async function shareToX(file: File, shareUrl?: string): Promise<"native" 
 
     const tryOpen = async (url: string) => {
       console.debug("shareToX: attempting deep link ->", url);
+      showDebugToast(url);
       let opened = false;
 
       const onVisibility = () => {
