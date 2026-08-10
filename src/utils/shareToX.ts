@@ -44,51 +44,61 @@ export async function shareToX(file: File, shareUrl?: string): Promise<"native" 
 
   // Try deep-linking into the native X/Twitter app on mobile platforms.
   if (isIOS || isAndroid) {
-    const appUrl = `twitter://post?message=${encodeURIComponent(text)}`;
-    const androidIntent = `intent://post?message=${encodeURIComponent(text)}#Intent;package=com.twitter.android;scheme=twitter;end`;
+    const androidIntent = `intent://tweet?text=${encodeURIComponent(text)}#Intent;package=com.twitter.android;scheme=twitter;end`;
 
-    let fallbackOpened = false;
-    const tryOpenFallback = () => {
-      if (fallbackOpened) return;
-      fallbackOpened = true;
-      window.open(webIntent, "_blank", "noopener,noreferrer");
-    };
-
-    const onVisibility = () => {
-      if (document.hidden) {
-        // Page was hidden — likely the app opened successfully
-        fallbackOpened = true;
-      }
-    };
-
-    document.addEventListener("visibilitychange", onVisibility);
-
-    // Attempt platform-appropriate deep link
-    try {
-      if (isAndroid) {
-        // Use Android intent first, then scheme fallback
-        window.location.href = androidIntent;
-      } else {
-        window.location.href = appUrl;
-      }
-    } catch (e) {
-      try {
-        window.open(isAndroid ? androidIntent : appUrl, "_blank", "noopener,noreferrer");
-      } catch {}
+    // Try multiple candidate schemes/paths — different Twitter app versions expect different params
+    const candidates: string[] = [];
+    if (isAndroid) {
+      candidates.push(androidIntent);
+      candidates.push(`twitter://post?message=${encodeURIComponent(text)}`);
+      candidates.push(`twitter://post?text=${encodeURIComponent(text)}`);
+      candidates.push(`twitter://compose?message=${encodeURIComponent(text)}`);
+      candidates.push(`twitter://compose?text=${encodeURIComponent(text)}`);
+    } else {
+      // iOS
+      candidates.push(`twitter://post?message=${encodeURIComponent(text)}`);
+      candidates.push(`twitter://post?text=${encodeURIComponent(text)}`);
+      candidates.push(`twitter://compose?message=${encodeURIComponent(text)}`);
+      candidates.push(`twitter://compose?text=${encodeURIComponent(text)}`);
     }
 
-    // If the app didn't open within ~800ms, fall back to the web intent
-    const timer = window.setTimeout(() => {
-      tryOpenFallback();
-      document.removeEventListener("visibilitychange", onVisibility);
-    }, 800);
+    const tryOpen = async (url: string) => {
+      console.debug("shareToX: attempting deep link ->", url);
+      let opened = false;
 
-    // Clean up after a short while
-    setTimeout(() => {
-      clearTimeout(timer);
-      document.removeEventListener("visibilitychange", onVisibility);
-    }, 2000);
+      const onVisibility = () => {
+        if (document.hidden) opened = true;
+      };
 
+      document.addEventListener("visibilitychange", onVisibility);
+
+      try {
+        // First try changing location (works in many mobile browsers)
+        window.location.href = url;
+      } catch (e) {
+        try {
+          window.open(url, "_blank", "noopener,noreferrer");
+        } catch {}
+      }
+
+      // wait briefly to see if the page gets hidden (app opened)
+      await new Promise((res) => setTimeout(res, 1200));
+      document.removeEventListener("visibilitychange", onVisibility);
+      return opened;
+    };
+
+    for (const candidate of candidates) {
+      try {
+        // eslint-disable-next-line no-await-in-loop
+        const ok = await tryOpen(candidate);
+        if (ok) return "intent";
+      } catch (e) {
+        console.debug("shareToX: deep link attempt failed", e);
+      }
+    }
+
+    // nothing opened the native app — fall back to web intent
+    window.open(webIntent, "_blank", "noopener,noreferrer");
     return "intent";
   }
 
