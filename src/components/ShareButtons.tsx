@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Download, Send, Check } from "lucide-react";
+import { Download, Send, Check, Loader2 } from "lucide-react";
 import { shareToX } from "../utils/shareToX";
 
 interface ShareButtonsProps {
@@ -10,6 +10,7 @@ interface ShareButtonsProps {
 
 export default function ShareButtons({ blob, filename, shareUrl }: ShareButtonsProps) {
   const [downloaded, setDownloaded] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
 
   const handleDownload = () => {
     const url = URL.createObjectURL(blob);
@@ -24,9 +25,18 @@ export default function ShareButtons({ blob, filename, shareUrl }: ShareButtonsP
     setTimeout(() => setDownloaded(false), 2000);
   };
 
-  const handleShare = () => {
+  const handleShare = async () => {
+    // NOTE: this must stay a synchronous call, not `await`ed before
+    // shareToX runs — shareToX itself opens its fallback tab synchronously
+    // on the very first line of execution (before any internal await), so
+    // the browser still counts it as a direct response to this click.
+    setIsSharing(true);
     const file = new File([blob], filename, { type: "image/png" });
-    shareToX(file, shareUrl);
+    try {
+      await shareToX(file, shareUrl);
+    } finally {
+      setIsSharing(false);
+    }
   };
 
   return (
@@ -45,12 +55,22 @@ export default function ShareButtons({ blob, filename, shareUrl }: ShareButtonsP
       <button
         type="button"
         onClick={handleShare}
+        disabled={isSharing}
         className="flex-1 rounded-full bg-ink border-2 border-seafoam/50 text-sand font-display
                    font-black tracking-wide text-base py-5 flex items-center justify-center gap-2
-                   active:scale-[0.97] transition-transform"
+                   active:scale-[0.97] transition-transform disabled:opacity-70"
       >
-        <Send className="w-5 h-5" />
-        SHARE TO X
+        {isSharing ? (
+          <>
+            <Loader2 className="w-5 h-5 animate-spin" />
+            OPENING X…
+          </>
+        ) : (
+          <>
+            <Send className="w-5 h-5" />
+            SHARE TO X
+          </>
+        )}
       </button>
     </div>
   );
