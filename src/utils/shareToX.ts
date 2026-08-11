@@ -21,27 +21,24 @@ import { SHARE_CAPTION } from "../config/frameConfig";
  * longer than it should. Opening the (initially blank) tab first and then
  * pointing it at the intent URL avoids that entirely.
  *
- * Native file-sharing is also skipped on desktop OSes (Windows/macOS/
- * Linux). Even when `navigator.canShare({ files })` reports true there, it
- * only proves the browser CAN hand the file to *some* OS share sheet - it
- * says nothing about whether X/Twitter is registered as a target inside
- * that sheet, and on desktop it essentially never is (X has no
- * OS-registered share-receiver app on Windows/macOS the way it does on
- * iOS/Android). That leaves people staring at a real share dialog with no
- * way to actually reach X from it. Only iOS/Android reliably have X wired
- * up as a share target, so only those get the native path; every other
- * platform (including touchscreen Windows laptops, which do report touch
- * support) goes straight to the intent tab.
+ * Native file-sharing is attempted on EVERY platform, not just mobile.
+ * X actually does register itself as an OS-level share target on desktop
+ * too: its installed PWA (Edge/Chrome "Install app") declares a
+ * `share_target` with a `files` param in its manifest, so once a person has
+ * installed the X app from their browser, Windows' native Share flyout
+ * (and the equivalent on macOS/ChromeOS) lists X as a real destination for
+ * an image + caption - selecting it opens X's compose view with the photo
+ * already attached, exactly like the mobile flow. There is no reliable way
+ * to detect from here whether that PWA happens to be installed, so instead
+ * of guessing by platform, we just ask the browser: if `navigator.share`
+ * exists and `canShare` says it can handle this file, we let the OS show
+ * whatever share surface it has (which may or may not include X) rather
+ * than skipping straight past it. If nothing suitable is picked, or the
+ * OS has nothing to offer, this rejects/aborts and we fall through to the
+ * intent-tab fallback below - so there's no dead end either way.
  */
-function isMobileOS(): boolean {
-  if (typeof navigator === "undefined") return false;
-  const ua = navigator.userAgent || "";
-  return /iPhone|iPad|iPod|Android/i.test(ua);
-}
-
 export async function shareToX(file: File, shareUrl?: string): Promise<"native" | "intent"> {
   const canUseNativeShare =
-    isMobileOS() &&
     typeof navigator.share === "function" &&
     typeof navigator.canShare === "function" &&
     navigator.canShare({ files: [file] });
