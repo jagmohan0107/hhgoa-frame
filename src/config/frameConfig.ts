@@ -136,4 +136,4 @@ export const OUTPUT_MIME = "image/png" as const;
 export const OUTPUT_FILENAME_PREFIX = "HHGOA26";
 
 export const SHARE_CAPTION =
-  "Just framed my HH Goa 2026 identity 🌴💻\nReady to build, ship and create in Goa.\nCreate your id: https://hhgoa-frame-meyrekjnc-jagmohan0107s-projects.vercel.app/\n#FrameInGoa #HHGoa2026";
+  "Just framed my HH Goa 2026 identity 🌴💻\nReady to build, ship and create in Goa.\nCreate your id: https://hhgoa-frame-theta.vercel.app/"\n#FrameInGoa #HHGoa2026";
