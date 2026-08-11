@@ -61,23 +61,13 @@ export async function shareToX(file: File, shareUrl?: string): Promise<"native" 
     }
   }
 
-  // Open the tab FIRST, synchronously, still inside the original click's
-  // call stack - this is what keeps it from being blocked or stalling on a
-  // blank page.
-  const tab = window.open("", "_blank");
-
   const params = new URLSearchParams({ text: SHARE_CAPTION });
   if (shareUrl) params.set("url", shareUrl);
-  const intentUrl = "https://x.com/intent/tweet?" + params.toString();
+  const intentUrl = "https://twitter.com/intent/tweet?" + params.toString();
 
-  if (tab) {
-    tab.opener = null; // mitigate reverse-tabnabbing; destination is fixed to x.com
-    tab.location.href = intentUrl;
-  } else {
-    // Popup blocked outright (e.g. browser setting) - fall back to
-    // navigating the current tab so the share still goes through.
-    window.location.href = intentUrl;
-  }
+  // Navigate immediately in the current tab so the Twitter composer opens
+  // as fast as possible without waiting on a blank popup.
+  window.location.assign(intentUrl);
 
   return "intent";
 }
