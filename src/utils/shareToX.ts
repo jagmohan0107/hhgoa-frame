@@ -65,10 +65,8 @@ export async function shareToX(file: File, shareUrl?: string): Promise<"native" 
   if (shareUrl) params.set("url", shareUrl);
   const intentUrl = "https://twitter.com/intent/tweet?" + params.toString();
 
-  const newTab = window.open(intentUrl, "_blank", "noopener,noreferrer");
-  if (!newTab) {
-    window.location.assign(intentUrl);
-  }
+  // Navigate directly so Twitter opens as quickly as possible.
+  window.location.assign(intentUrl);
 
   return "intent";
 }
