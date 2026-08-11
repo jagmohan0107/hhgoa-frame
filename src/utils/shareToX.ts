@@ -64,9 +64,35 @@ export async function shareToX(file: File, shareUrl?: string): Promise<"native" 
   const params = new URLSearchParams({ text: SHARE_CAPTION });
   if (shareUrl) params.set("url", shareUrl);
   const intentUrl = "https://twitter.com/intent/tweet?" + params.toString();
+  const shareText = [SHARE_CAPTION, shareUrl].filter(Boolean).join("\n");
 
-  // Open a new tab immediately so the compose screen appears without
-  // replacing the current page state.
+  const ua = navigator.userAgent || "";
+  const isMobile = /Android|iPhone|iPad|iPod/i.test(ua);
+
+  if (isMobile) {
+    const twitterAppUrl = `twitter://post?message=${encodeURIComponent(shareText)}`;
+    const androidIntentUrl = `intent://post?message=${encodeURIComponent(shareText)}#Intent;package=com.twitter.android;scheme=twitter;end`;
+
+    const fallbackToWeb = () => {
+      const newTab = window.open(intentUrl, "_blank", "noopener,noreferrer");
+      if (!newTab) {
+        window.location.assign(intentUrl);
+      }
+    };
+
+    try {
+      if (/Android/i.test(ua)) {
+        window.location.assign(androidIntentUrl);
+      } else {
+        window.location.assign(twitterAppUrl);
+      }
+      setTimeout(fallbackToWeb, 800);
+    } catch {
+      fallbackToWeb();
+    }
+    return "intent";
+  }
+
   const newTab = window.open(intentUrl, "_blank", "noopener,noreferrer");
   if (!newTab) {
     window.location.assign(intentUrl);
