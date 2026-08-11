@@ -65,9 +65,12 @@ export async function shareToX(file: File, shareUrl?: string): Promise<"native" 
   if (shareUrl) params.set("url", shareUrl);
   const intentUrl = "https://twitter.com/intent/tweet?" + params.toString();
 
-  // Navigate immediately in the current tab so the Twitter composer opens
-  // as fast as possible without waiting on a blank popup.
-  window.location.assign(intentUrl);
+  // Open a new tab immediately so the compose screen appears without
+  // replacing the current page state.
+  const newTab = window.open(intentUrl, "_blank", "noopener,noreferrer");
+  if (!newTab) {
+    window.location.assign(intentUrl);
+  }
 
   return "intent";
 }
