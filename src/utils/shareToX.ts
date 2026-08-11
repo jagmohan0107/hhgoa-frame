@@ -20,9 +20,28 @@ import { SHARE_CAPTION } from "../config/frameConfig";
  * popup either gets silently blocked or ends up sitting on a blank page far
  * longer than it should. Opening the (initially blank) tab first and then
  * pointing it at the intent URL avoids that entirely.
+ *
+ * Native file-sharing is also skipped on desktop OSes (Windows/macOS/
+ * Linux). Even when `navigator.canShare({ files })` reports true there, it
+ * only proves the browser CAN hand the file to *some* OS share sheet - it
+ * says nothing about whether X/Twitter is registered as a target inside
+ * that sheet, and on desktop it essentially never is (X has no
+ * OS-registered share-receiver app on Windows/macOS the way it does on
+ * iOS/Android). That leaves people staring at a real share dialog with no
+ * way to actually reach X from it. Only iOS/Android reliably have X wired
+ * up as a share target, so only those get the native path; every other
+ * platform (including touchscreen Windows laptops, which do report touch
+ * support) goes straight to the intent tab.
  */
-export async function shareToX(file: File, shareUrl?: string): Promise<"native" | "intent" | "cancelled"> {
+function isMobileOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  const ua = navigator.userAgent || "";
+  return /iPhone|iPad|iPod|Android/i.test(ua);
+}
+
+export async function shareToX(file: File, shareUrl?: string): Promise<"native" | "intent"> {
   const canUseNativeShare =
+    isMobileOS() &&
     typeof navigator.share === "function" &&
     typeof navigator.canShare === "function" &&
     navigator.canShare({ files: [file] });
@@ -35,15 +54,13 @@ export async function shareToX(file: File, shareUrl?: string): Promise<"native" 
         text: SHARE_CAPTION,
       });
       return "native";
-    } catch (err) {
-      // If the user deliberately dismissed the native share sheet, respect
-      // that and stop - silently forcing open an X tab right after someone
-      // cancels is surprising and feels like the button "did something
-      // wrong" rather than what they asked.
-      if (err instanceof DOMException && err.name === "AbortError") {
-        return "cancelled";
-      }
-      // Any other failure (rare) falls through to the intent link below.
+    } catch {
+      // Any failure here - including AbortError, which some desktop
+      // browsers (notably Windows Chrome/Edge) throw near-instantly when
+      // there's no OS-level share target for a file, NOT only on a
+      // deliberate user cancel - falls through to the reliable X intent
+      // link below. Silently stopping here would make the button appear
+      // completely dead on exactly those browsers.
     }
   }
 
