@@ -1,19 +1,19 @@
-/**
- * FRAME CONFIG — single source of truth for the HH Goa 2026 frame geometry.
+﻿/**
+ * FRAME CONFIG â€” single source of truth for the HH Goa 2026 frame geometry.
  *
- * ✅ CALIBRATED against the real supplied artwork
- * (ChatGPT_Image_Aug_10__2026__11_06_22_AM.png, 1086×1448, 3:4).
+ * âœ… CALIBRATED against the real supplied artwork
+ * (ChatGPT_Image_Aug_10__2026__11_06_22_AM.png, 1086Ã—1448, 3:4).
  *
  * All coordinates below were measured directly from the source pixels
  * (connected-component analysis of the flat placeholder box, and glyph
- * bounding boxes for the name/role pills) — not eyeballed.
+ * bounding boxes for the name/role pills) â€” not eyeballed.
  *
- * IMPORTANT — the shipped frame asset (`public/frame/hhgoa-frame.png`) is a
+ * IMPORTANT â€” the shipped frame asset (`public/frame/hhgoa-frame.png`) is a
  * processed copy of the original: every pixel of visible artwork is
  * byte-identical, but the flat dark-green placeholder rectangle has been
  * converted to a transparent window (with a ~1px feathered edge) so the
  * user's photo can sit *behind* it. This was required because the source
- * file supplied had that area painted solid, not transparent — layering a
+ * file supplied had that area painted solid, not transparent â€” layering a
  * photo behind an opaque frame would otherwise hide it completely. No
  * colors, typography, illustrations, logos, proportions, or layout were
  * changed; only alpha was added to that one placeholder region so the
@@ -72,7 +72,7 @@ export const PHOTO_AREA: PhotoArea = {
 };
 
 // Measured from the "MADHAVAN SINGH" sample text baked into the artwork's
-// dark-green name pill (pill spans x:170–885, y:1150–1251)
+// dark-green name pill (pill spans x:170â€“885, y:1150â€“1251)
 export const NAME_TEXT: TextSlot = {
   x: 528, // pill's horizontal center
   y: 1201, // sample glyph vertical center
@@ -88,7 +88,7 @@ export const NAME_TEXT: TextSlot = {
 };
 
 // Measured from the "AI/ML ENGINEER | PYTHON | TENSORFLOW | DATA SCIENCE"
-// sample text in the orange role pill (pill spans x:198–876, y:1278–1346)
+// sample text in the orange role pill (pill spans x:198â€“876, y:1278â€“1346)
 export const ROLE_TEXT: TextSlot = {
   x: 537, // pill's horizontal center
   y: 1313, // sample glyph vertical center
@@ -135,5 +135,6 @@ export const BUILDER_TITLES = [
 export const OUTPUT_MIME = "image/png" as const;
 export const OUTPUT_FILENAME_PREFIX = "HHGOA26";
 
-export const SHARE_CAPTION =
-  "Just framed my HH Goa 2026 identity 🌴💻\nReady to build, ship and create in Goa.\nCreate your id: https://hhgoa-frame-theta.vercel.app/"\n#FrameInGoa #HHGoa2026";
+export const SHARE_CAPTION = "Just framed my HH Goa 2026 identity 🌴💻\\nReady to build, ship and create in Goa.\\nCreate your id: https://hhgoa-frame-meyrekjnc-jagmohan0107s-projects.vercel.app/\\n#FrameInGoa #HHGoa2026";
+
+
